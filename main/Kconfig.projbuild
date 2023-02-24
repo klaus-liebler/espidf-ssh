@@ -1,0 +1,10 @@
+menu "Network Configuration"
+
+    config NETWORK_WIFI_STA_SSID
+        string "WiFi SSID"
+        default "myssid"
+       
+    config NETWORK_WIFI_STA_PASSWORD
+        string "WiFi Password"
+        default "mypassword"
+endmenu
