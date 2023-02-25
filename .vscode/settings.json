@@ -10,5 +10,9 @@
     "idf.portWin": "COM10",
     "idf.pythonBinPathWin": "C:\\Users\\KlausLiebler\\.espressif\\python_env\\idf5.0_py3.8_env\\Scripts\\python.exe",
     "idf.toolsPathWin": "C:\\Users\\KlausLiebler\\.espressif",
-    "idf.flashType": "UART"
+    "idf.flashType": "UART",
+    "files.associations": {
+        "stdbool.h": "c",
+        "queue.h": "c"
+    }
 }

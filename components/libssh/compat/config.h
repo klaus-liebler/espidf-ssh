@@ -2,7 +2,7 @@
 #define PACKAGE "libssh"
 
 /* Version number of package */
-#define VERSION "0.9.4"
+#define VERSION "0.10.4"
 
 #define SYSCONFDIR "etc"
 #define BINARYDIR "libssh"

@@ -8,6 +8,8 @@
 #include <stddef.h>
 #include "example.h"
 #include "sshd.h"
+#include "esp_log.h"
+#define TAG "SSHD"
 
 static void handle_char_from_local(struct interactive_session *, char);
 
@@ -54,17 +56,23 @@ import_embedded_host_key(ssh_bind sshbind, const char *base64_key)
 		p += ptralign;
 		q += ptralign;
 	}
-	if (p >= e)
+	if (p >= e){
+		ESP_LOGE(TAG, "p >= e");
 		return SSH_ERROR;
+	}
 	probe = ssh_key_new();
-	if (probe == NULL)
+	if (probe == NULL){
+		ESP_LOGE(TAG, "probe == NULL");
 		return SSH_ERROR;
+	}
 	error = ssh_pki_import_privkey_base64(base64_key, NULL, NULL, NULL,
 					      &probe);
 	type = ssh_key_type(probe);
 	ssh_key_free(probe);
-	if (error != SSH_OK)
+	if (error != SSH_OK){
+		ESP_LOGE(TAG, " ssh_pki_import_privkey_base64(base64_key, NULL, NULL, NULL,&probe);!=SSH_OK");
 		return error;
+	}
 	switch (type) {
 	case SSH_KEYTYPE_ECDSA_P256:
 	case SSH_KEYTYPE_ECDSA_P521:
@@ -84,10 +92,14 @@ import_embedded_host_key(ssh_bind sshbind, const char *base64_key)
 				    - 1 * ptralign);
 		break;
 	default:
+		ESP_LOGE(TAG, "switch (type) -->default");
 		return SSH_ERROR;
 	}
 	error = ssh_pki_import_privkey_base64(base64_key, NULL, NULL, NULL,
 					      target);
+	if (error != SSH_OK){
+		ESP_LOGE(TAG, "ssh_pki_import_privkey_base64(base64_key, NULL, NULL, NULL, target);!=SSH_OK");
+	}
 	return error;
 }
 
@@ -354,11 +366,14 @@ create_new_server(struct server_ctx *sc)
 	ssh_callbacks_init(&sc->sc_bind_cb);
 	sc->sc_sshbind = ssh_bind_new();
 	if (sc->sc_sshbind == NULL) {
+		ESP_LOGE(TAG, "sc->sc_sshbind == NULL");
 		return SSH_ERROR;
 	}
 	ssh_bind_options_set(sc->sc_sshbind, SSH_BIND_OPTIONS_LOG_VERBOSITY_STR, "1");
 	ssh_bind_set_callbacks(sc->sc_sshbind, &sc->sc_bind_cb, sc);
-	import_embedded_host_key(sc->sc_sshbind, sc->sc_host_key);
+	if(import_embedded_host_key(sc->sc_sshbind, sc->sc_host_key)!=SSH_OK){
+		ESP_LOGE(TAG, "import_embedded_host_key(sc->sc_sshbind, sc->sc_host_key)!=SSH_OK");
+	}
 	ssh_bind_options_set(sc->sc_sshbind, SSH_BIND_OPTIONS_BINDPORT_STR, "22");
 	ssh_bind_options_set(sc->sc_sshbind, SSH_BIND_OPTIONS_BINDADDR, "0.0.0.0");
 	if(ssh_bind_listen(sc->sc_sshbind) < 0) {
@@ -395,18 +410,22 @@ sshd_main(struct server_ctx *sc)
 	int error;
 	ssh_event event;
 	bool time_to_die = false;
-
+	ESP_LOGI(TAG, "ssh_init()");
 	if (ssh_init() < 0) {
 		return SSH_ERROR;
 	}
-
+	ESP_LOGI(TAG, "ssh_event_new()");
 	event = ssh_event_new();
-	if (!event)
+	if (!event){
 		return SSH_ERROR;
+	}
 	sc->sc_sshevent = event;
-	if (create_new_server(sc) != SSH_OK)
+	ESP_LOGI(TAG, "create_new_server(sc)");
+	if (create_new_server(sc) != SSH_OK){
+		ESP_LOGI(TAG, "create_new_server(sc)");
 		return SSH_ERROR;
-
+	}
+	ESP_LOGI(TAG, "while (!time_to_die)");
 	while (!time_to_die) {
 		error = ssh_event_dopoll(sc->sc_sshevent, 1000);
 		if (error == SSH_ERROR || error == SSH_AGAIN) {

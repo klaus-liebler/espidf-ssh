@@ -6,6 +6,8 @@
 #include <sys/queue.h>
 #include "example.h"
 #include "sshd.h"
+#include "esp_log.h"
+#define TAG "TASK"
 
 /* change this */
 static struct ssh_user hardcoded_example_users[] = {
@@ -86,7 +88,10 @@ sshd_task(void *arg)
 	sc->sc_lookup_user = lookup_user;
 	sc->sc_begin_interactive_session = minicli_begin_interactive_session;
 	sc->sc_auth_methods = SSH_AUTH_METHOD_PASSWORD | SSH_AUTH_METHOD_PUBLICKEY;
-	sshd_main(sc);
+	int error =sshd_main(sc); 
+	if(error!=SSH_OK){
+		ESP_LOGE(TAG, "Error while sshd_main(sc): %i", error);
+	}
 }
 
 void
