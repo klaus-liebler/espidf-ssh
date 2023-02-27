@@ -1758,6 +1758,8 @@ static int ssh_bind_set_algo(ssh_bind sshbind,
  *
  * @return              0 on success, < 0 on error, invalid option, or parameter.
  */
+#include <esp_log.h>
+#define TAG "OPT"
 int ssh_bind_options_set(ssh_bind sshbind, enum ssh_bind_options_e type,
     const void *value)
 {
@@ -1767,23 +1769,23 @@ int ssh_bind_options_set(ssh_bind sshbind, enum ssh_bind_options_e type,
   int i, rc;
 
   if (sshbind == NULL) {
-    return -1;
+    return -42;
   }
 
   switch (type) {
     case SSH_BIND_OPTIONS_HOSTKEY:
       if (value == NULL) {
         ssh_set_error_invalid(sshbind);
-        return -1;
+        return -43;
       } else {
           int key_type;
           ssh_key key;
           ssh_key *bind_key_loc = NULL;
           char **bind_key_path_loc;
-
+            ESP_LOGI(TAG, "Calling ssh_pki_import_privkey_file");
           rc = ssh_pki_import_privkey_file(value, NULL, NULL, NULL, &key);
           if (rc != SSH_OK) {
-              return -1;
+              return -44;
           }
           allowed = ssh_bind_key_size_allowed(sshbind, key);
           if (!allowed) {
@@ -1792,7 +1794,7 @@ int ssh_bind_options_set(ssh_bind sshbind, enum ssh_bind_options_e type,
                             "The host key size %d is too small.",
                             ssh_key_size(key));
               ssh_key_free(key);
-              return -1;
+              return -45;
           }
 
           key_type = ssh_key_type(key);

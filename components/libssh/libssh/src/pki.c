@@ -940,8 +940,8 @@ int ssh_pki_import_privkey_file(const char *filename,
     off_t size;
     int rc;
     char err_msg[SSH_ERRNO_MSG_MAX] = {0};
-
     if (pkey == NULL || filename == NULL || *filename == '\0') {
+        SSH_LOG(SSH_LOG_WARN, "pkey == NULL || filename == NULL || *filename == '0'");
         return SSH_ERROR;
     }
 
@@ -951,7 +951,6 @@ int ssh_pki_import_privkey_file(const char *filename,
         return rc;
     }
 #endif /* WITH_PKCS11_URI */
-
     file = fopen(filename, "rb");
     if (file == NULL) {
         SSH_LOG(SSH_LOG_WARN,
@@ -960,7 +959,6 @@ int ssh_pki_import_privkey_file(const char *filename,
                 ssh_strerror(errno, err_msg, SSH_ERRNO_MSG_MAX));
         return SSH_EOF;
     }
-
     rc = fstat(fileno(file), &sb);
     if (rc < 0) {
         fclose(file);

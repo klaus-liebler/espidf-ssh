@@ -7,24 +7,9 @@
 #include "example.h"
 #include "sshd.h"
 #include "esp_log.h"
-#define TAG "TASK"
+#define TAG "TSK"
 
-/* change this */
-static struct ssh_user hardcoded_example_users[] = {
-	{
-		.su_user = "neo",
-		.su_password = "trinity",
-	},
-	{
-		.su_user = "tnn",
-		.su_keytype = SSH_KEYTYPE_ED25519,
-		.su_base64_key = "AAAAC3NzaC1lZDI1NTE5AAAAILrLCwnBbitV0fhQyy7PClEDVLbtD3tzmuWX4fU6DuxI"
-	},
-	{
-	}
-};
 
-/* obviously you'll want to replace this also */
 const char *hardcoded_example_host_key =
 	"-----BEGIN OPENSSH PRIVATE KEY-----\n"
 	"b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAABlwAAAAdzc2gtcn\n"
@@ -65,30 +50,12 @@ const char *hardcoded_example_host_key =
 	"l9rTiUsxla43sBAAAAHHRubkB0MzYxMC5yeW1kZmFydHN2ZXJrZXQuc2UBAgMEBQY=\n"
 	"-----END OPENSSH PRIVATE KEY-----\n";
 
-static struct ssh_user *
-lookup_user(struct server_ctx *sc, const char *user)
-{
-	struct ssh_user *su;
-	for (su = hardcoded_example_users; su->su_user; su++) {
-		if (strcmp(user, su->su_user) == 0)
-			return su;
-	}
-	return NULL;
 
-}
 
 void
 sshd_task(void *arg)
 {
-	struct server_ctx *sc;
-	sc = calloc(1, sizeof(struct server_ctx));
-	if (!sc)
-		return;
-	sc->sc_host_key = hardcoded_example_host_key;
-	sc->sc_lookup_user = lookup_user;
-	sc->sc_begin_interactive_session = minicli_begin_interactive_session;
-	sc->sc_auth_methods = SSH_AUTH_METHOD_PASSWORD | SSH_AUTH_METHOD_PUBLICKEY;
-	int error =sshd_main(sc); 
+	int error =sshd_main(hardcoded_example_host_key); 
 	if(error!=SSH_OK){
 		ESP_LOGE(TAG, "Error while sshd_main(sc): %i", error);
 	}
@@ -97,5 +64,5 @@ sshd_task(void *arg)
 void
 start_sshd(void)
 {
-	xTaskCreate(sshd_task, "sshd", 32768, NULL, 10, NULL);
+	xTaskCreate(sshd_task, "sshd", 4096*4, NULL, 10, NULL);
 }

@@ -2,12 +2,13 @@
 #include "freertos/task.h"
 #include "freertos/event_groups.h"
 #include "esp_system.h"
-#include "esp_wifi.h"
+
 #include "esp_event.h"
 #include "nvs_flash.h"
-#include "example.h"
 #include "esp_log.h"
 #include <string.h>
+#include "driver/spi_master.h"
+#include <ethernet.hh>
 #define TAG "WIFI"
 
 
@@ -20,7 +21,7 @@ static EventGroupHandle_t s_wifi_event_group;
 #define WIFI_FAIL_BIT      BIT1
 
 
-
+/*
 static void event_handler(void* arg, esp_event_base_t event_base,
                                 int32_t event_id, void* event_data)
 {
@@ -75,16 +76,13 @@ void wifi_init_sta(const char* ssid, const char* pass)
 
     ESP_LOGI(TAG, "wifi_init_sta finished.");
 
-    /* Waiting until either the connection is established (WIFI_CONNECTED_BIT) or connection failed for the maximum
-     * number of re-tries (WIFI_FAIL_BIT). The bits are set by event_handler() (see above) */
     EventBits_t bits = xEventGroupWaitBits(s_wifi_event_group,
             WIFI_CONNECTED_BIT | WIFI_FAIL_BIT,
             pdFALSE,
             pdFALSE,
             portMAX_DELAY);
 
-    /* xEventGroupWaitBits() returns the bits before the call returned, hence we can test which event actually
-     * happened. */
+
     if (bits & WIFI_CONNECTED_BIT) {
         ESP_LOGI(TAG, "connected to ap");
     } else if (bits & WIFI_FAIL_BIT) {
@@ -93,7 +91,7 @@ void wifi_init_sta(const char* ssid, const char* pass)
         ESP_LOGE(TAG, "UNEXPECTED EVENT");
     }
 }
-
+*/
 static void
 initialize_nvs()
 {
@@ -105,12 +103,15 @@ initialize_nvs()
 	ESP_ERROR_CHECK(err);
 }
 
-void
+extern "C" void start_sshd(void);
+
+extern "C" void
 app_main(void)
 {
-	initialize_nvs();
+	//initialize_nvs();
 	/* replace with SSID and passphrase */
-	wifi_init_sta(CONFIG_NETWORK_WIFI_STA_SSID, CONFIG_NETWORK_WIFI_STA_PASSWORD);
+	//wifi_init_sta(CONFIG_NETWORK_WIFI_STA_SSID, CONFIG_NETWORK_WIFI_STA_PASSWORD);
+    WIFI_ETH::initETH(false, SPI2_HOST, GPIO_NUM_13, GPIO_NUM_11, GPIO_NUM_12, SPI_MASTER_FREQ_20M, GPIO_NUM_21, GPIO_NUM_10, GPIO_NUM_14, 1);
 	start_sshd();
 }
 

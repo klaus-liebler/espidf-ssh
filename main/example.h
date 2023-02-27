@@ -1,6 +1,4 @@
 
-void start_sshd(void);
-
 struct interactive_session {
 	void	(*is_handle_char_from_remote)(struct interactive_session *, char);
 	void	(*is_handle_char_from_local)(struct interactive_session *, char);

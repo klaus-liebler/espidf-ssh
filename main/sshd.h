@@ -1,9 +1,4 @@
-struct ssh_user {
-	const char				*su_user;
-	const char				*su_password;
-	const enum ssh_keytypes_e		su_keytype;
-	const char				*su_base64_key;
-};
+
 
 struct client_ctx {
 	ssh_session				cc_session;
@@ -30,10 +25,9 @@ struct server_ctx {
 	struct ssh_callbacks_struct		sc_generic_cb;
 	struct ssh_bind_callbacks_struct	sc_bind_cb;
 	int					sc_auth_methods;
-	struct ssh_user *			(*sc_lookup_user)(struct server_ctx *, const char *);
 	const char *				sc_host_key;
 	void					(*sc_begin_interactive_session)(struct interactive_session *);
 	SLIST_HEAD(, client_ctx) sc_client_head;
 };
 
-int sshd_main(struct server_ctx *sc);
+int sshd_main(const char *hardcoded_example_host_key);
