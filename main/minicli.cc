@@ -2,18 +2,18 @@
 #include <stdint.h>
 #include <stdarg.h>
 #include <string.h>
-#include "example.h"
+#include "minicli.hh"
 
 char next_command[16];
 uint8_t next_command_idx = 0;
 
-static void minicli_command_banner(struct interactive_session *);
-static void minicli_command_help(struct interactive_session *);
-static void minicli_command_noop(struct interactive_session *);
+static void minicli_command_banner(SessionCallback* cb );
+static void minicli_command_help(SessionCallback* cb );
+static void minicli_command_noop(SessionCallback* cb );
 
 struct minicli_command {
 	char *cmd;
-	void (*handler)(struct interactive_session *);
+	void (*handler)(SessionCallback* cb);
 };
 
 struct minicli_command minicli_commands[] = {
@@ -24,7 +24,7 @@ struct minicli_command minicli_commands[] = {
 };
 
 void
-minicli_printf(struct interactive_session *is, const char *fmt, ...)
+minicli_printf(SessionCallback* cb , const char *fmt, ...)
 {
 	char tmp[512];
 	int i;
@@ -38,14 +38,14 @@ minicli_printf(struct interactive_session *is, const char *fmt, ...)
 			return;
 		} else {
 			if (tmp[i] == '\n')
-				is->is_handle_char_from_local(is, '\r');
-			is->is_handle_char_from_local(is, tmp[i]);
+				cb->printChar('\r');
+			cb->printChar(tmp[i]);
 		}
 	}
 }
 
 static void
-minicli_command_noop(struct interactive_session *is)
+minicli_command_noop(SessionCallback* cb )
 {
 }
 
@@ -59,84 +59,88 @@ static const char banner[] = "\n"
 
 
 static void
-minicli_command_banner(struct interactive_session *is)
+minicli_command_banner(SessionCallback* cb )
 {
-	minicli_printf(is, banner);
+	minicli_printf(cb, banner);
 }
 
 static void
-minicli_command_help(struct interactive_session *is)
+minicli_command_help(SessionCallback* cb)
 {
 	struct minicli_command *cc;
 
 	cc = minicli_commands;
 	while (cc->cmd != NULL) {
-		minicli_printf(is, "	%s\n", cc->cmd);
+		minicli_printf(cb, "	%s\n", cc->cmd);
 		cc++;
 	}
 }
 
 static void
-minicli_prompt(struct interactive_session *is)
+minicli_prompt(SessionCallback* cb )
 {
-	minicli_printf(is, "minicli> ");
+	minicli_printf(cb, "minicli> ");
 }
 
-void
-minicli_handle_command(struct interactive_session *is, const char *cmd)
+int MiniCli::handleChars(const char *cmd, SessionCallback* cb)
 {
 	struct minicli_command *cc;
 
 	cc = minicli_commands;
 	while (cc->cmd != NULL) {
 		if (!strcmp(cmd, cc->cmd)) {
-			cc->handler(is);
-			minicli_prompt(is);
-			return;
+			cc->handler(cb);
+			minicli_prompt(cb);
+			return 0;
 		}
 		cc++;
 	}
-	minicli_printf(is, "%c? unknown command\n", 7);
-	minicli_prompt(is);
+	minicli_printf(cb, "%c? unknown command\n", 7);
+	minicli_prompt(cb);
+	return 0;
 }
 
-static void
-minicli_handle_char(struct interactive_session *is, char c)
+int MiniCli::handleChar(char c, SessionCallback* cb)
 {
 	if (c == '\r') {
-		minicli_printf(is, "\n");
+		minicli_printf(cb, "\n");
 		next_command[next_command_idx] = 0;
-		minicli_handle_command(is, next_command);
+		handleChars(next_command, cb);
 		next_command_idx = 0;
 	} else if (c == 3) {
 		// ^C
-		minicli_printf(is, "^C\n");
+		minicli_printf(cb, "^C\n");
 		next_command[next_command_idx] = 0;
-		minicli_prompt(is);
+		minicli_prompt(cb);
 	} else if (c == 4) {
 		// ^D
 	} else if (c == 127) {
 		// backspace
 		if (next_command_idx > 0) {
-			minicli_printf(is, "%c %c", 8, 8);
+			minicli_printf(cb, "%c %c", 8, 8);
 			next_command_idx--;
 		} else {
-			minicli_printf(is, "%c", 7);
+			minicli_printf(cb, "%c", 7);
 		}
 	} else if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')) {
 		if (next_command_idx < sizeof(next_command) - 1) {
-			minicli_printf(is, "%c", c);
+			minicli_printf(cb, "%c", c);
 			next_command[next_command_idx++] = c;
 		}
 	} else {
 		// invalid chars ignored
 	}
+	return 1;
 }
 
-void
-minicli_begin_interactive_session(struct interactive_session *is)
+int MiniCli::beginSession(SessionCallback* cb )
 {
-	is->is_handle_char_from_remote = minicli_handle_char;
-	minicli_command_banner(is);
-	minicli_prompt(is);
+	minicli_command_banner(cb);
+	minicli_prompt(cb);
+	return 0;
+}
+
+int MiniCli::endSession(SessionCallback* cb )
+{
+	return 0;
 }

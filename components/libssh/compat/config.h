@@ -58,7 +58,7 @@
 /* Define to 1 if you have the <stdint.h> header file. */
 #define HAVE_STDINT_H 1
 
-/* Define to 1 if you have the <openssl/aes.h> header file. */
+/* Define to 1 if you have the <ssl/openaes.h> header file. */
 /* #undef HAVE_OPENSSL_AES_H */
 
 /* Define to 1 if you have the <wspiapi.h> header file. */
@@ -103,6 +103,12 @@
 /* Define to 1 if you have OpenSSL with X25519 support */
 /* #undef HAVE_OPENSSL_X25519 */
 
+/* Define to 1 if you have OpenSSL with Poly1305 support */
+// #undef HAVE_OPENSSL_EVP_POLY1305 1
+
+/* Define to 1 if you have gcrypt with ChaCha20/Poly1305 support */
+// #undef HAVE_GCRYPT_CHACHA_POLY 1
+
 /*************************** FUNCTIONS ***************************/
 
 /* Define to 1 if you have the `EVP_aes128_ctr' function. */
@@ -113,6 +119,9 @@
 
 /* Define to 1 if you have the `EVP_aes128_gcm' function. */
 /* #undef HAVE_OPENSSL_EVP_AES_GCM */
+
+/* Define to 1 if you have the `EVP_chacha20' function. */
+// #define HAVE_OPENSSL_EVP_CHACHA20 1
 
 /* Define to 1 if you have the `CRYPTO_THREADID_set_callback' function. */
 /* #undef HAVE_OPENSSL_CRYPTO_THREADID_SET_CALLBACK */
@@ -273,10 +282,13 @@
 /* #undef WITH_PCAP */
 
 /* Define to 1 if you want to enable calltrace debug output */
-#define DEBUG_CALLTRACE 1
+#define DEBUG_CALLTRACE 0
 
 /* Define to 1 if you want to enable NaCl support */
 /* #undef WITH_NACL */
+
+/* Define to 1 if you want to enable PKCS #11 URI support */
+//#define WITH_PKCS11_URI 1
 
 /*************************** ENDIAN *****************************/
 

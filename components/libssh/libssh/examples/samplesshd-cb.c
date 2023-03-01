@@ -296,6 +296,8 @@ int main(int argc, char **argv){
         printf("Error listening to socket: %s\n",ssh_get_error(sshbind));
         return 1;
     }
+    //bis hier her beim create
+    //das nachfolgende accept kommt schon im incoming connection handler
     r=ssh_bind_accept(sshbind,session);
     if(r==SSH_ERROR){
         printf("error accepting a connection : %s\n",ssh_get_error(sshbind));

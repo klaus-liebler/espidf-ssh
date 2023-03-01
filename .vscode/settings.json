@@ -31,6 +31,16 @@
         "tuple": "c",
         "type_traits": "c",
         "utility": "c",
-        "string.h": "c"
+        "string.h": "c",
+        "poll.h": "c",
+        "libssh_version.h": "c",
+        "random": "c",
+        "socket.h": "c",
+        "stubs.h": "c",
+        "fstream": "c",
+        "iomanip": "c",
+        "istream": "c",
+        "ostream": "c",
+        "*.inc": "c"
     }
 }

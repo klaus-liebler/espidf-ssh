@@ -70,6 +70,7 @@ set(srcs
   ${SRC}/pki_ed25519.c
   ${SRC}/pki_ed25519_common.c
   ${SRC}/pki_mbedcrypto.c
+  compat/stubs.c
 )
 
 idf_component_register(SRCS "${srcs}"
