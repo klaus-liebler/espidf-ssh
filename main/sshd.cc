@@ -60,11 +60,9 @@ namespace sshd{
 	}
 	static int sshfs_fstat(void *ctx, int fd, struct stat *st)
 	{
-
 		if (fd == 10)
 		{
 			size_t len = strlen((const char *)ctx);
-			ESP_LOGI(TAG, "vfs_fstat, called for fd=%i, return strlen %d", fd, len);
 			st->st_size = len;
 			return 0;
 		}
@@ -95,7 +93,7 @@ namespace sshd{
 
 	int	SshDemon::data_function(ssh_session session, ssh_channel channel, void *data, uint32_t len, int is_stderr, void *userdata)
 	{
-		ESP_LOGI(TAG, "data_function! with data len=%lu", len);
+		//ESP_LOGI(TAG, "data_function! with data len=%lu", len);
 		SshDemon *sshd = static_cast<SshDemon*>(userdata);
 		ConnectionCtx* cc = sshd->lookup_connectioncontext(session);
 		int i;
@@ -109,9 +107,22 @@ namespace sshd{
 				ssh_channel_close(channel);
 				return len;
 			}
-			sshd->sessionHandler->handleChar(c, cc);
 		}
+		sshd->shellHandler->handleChars(static_cast<const char*>(data), len, cc->shellId, cc);
 		return len;
+	}
+
+	int SshDemon::exec_request(ssh_session session, ssh_channel channel, const char *command, void *userdata)
+	{
+		ESP_LOGI(TAG, "exec_request!");
+		SshDemon *sshd = static_cast<SshDemon*>(userdata);
+		ConnectionCtx* cc = sshd->lookup_connectioncontext(session);
+		if (cc->cc_didshell)
+			return SSH_ERROR;
+		sshd->shellHandler->handleChars(command, strlen(command), cc->shellId, cc);
+		ssh_channel_send_eof(channel);
+		ssh_channel_close(channel);
+		return SSH_OK;
 	}
 
 	int SshDemon::pty_request(ssh_session session, ssh_channel channel, const char *term, int cols, int rows, int py, int px, void *userdata)
@@ -139,22 +150,11 @@ namespace sshd{
 		if (cc->cc_didshell)
 			return SSH_ERROR;
 		cc->cc_didshell = true;
-		sshd->sessionHandler->beginSession(cc);
+		cc->shellId=sshd->shellHandler->beginShell(cc);
 		return SSH_OK;
 	}
 
-	int SshDemon::exec_request(ssh_session session, ssh_channel channel, const char *command, void *userdata)
-	{
-		ESP_LOGI(TAG, "exec_request!");
-		SshDemon *sshd = static_cast<SshDemon*>(userdata);
-		ConnectionCtx* cc = sshd->lookup_connectioncontext(session);
-		if (cc->cc_didshell)
-			return SSH_ERROR;
-		sshd->sessionHandler->handleChars(command, cc);
-		ssh_channel_send_eof(channel);
-		ssh_channel_close(channel);
-		return SSH_OK;
-	}
+
 
 	int SshDemon::pty_resize(ssh_session session, ssh_channel channel, int cols, int rows, int py, int px, void *userdata)
 	{
@@ -247,20 +247,23 @@ namespace sshd{
 			return SSH_AUTH_DENIED;
 		if (cc->cc_didauth)
 			return SSH_AUTH_DENIED;
-		if (strcmp("user", user) != 0 || strcmp("password", password) != 0)
-			return SSH_AUTH_DENIED;
-		cc->cc_didauth = true;
-		ESP_LOGI(TAG, "SSH_AUTH_SUCCESS!");
-		return SSH_AUTH_SUCCESS;
+		for(auto user:*sshd->users){
+			if(strcmp("user", user.Username) == 0 && strcmp("password", user.Password) != 0){
+				cc->cc_didauth = true;
+				cc->is_privileded=user.IsPrivileged;
+				ESP_LOGI(TAG, "SSH_AUTH_SUCCESS!");
+				return SSH_AUTH_SUCCESS;
+			}
+		}
+		return SSH_AUTH_DENIED;
 	}
 
 	int	SshDemon::create_new_server()
 	{
-		
 		this->server_cb.auth_password_function=SshDemon::auth_password;
 		this->server_cb.channel_open_request_session_function=SshDemon::channel_open;
 		this->server_cb.userdata=this;
-		ssh_callbacks_init(&this->server_cb);//setzt die "size" der Striktur
+		ssh_callbacks_init(&this->server_cb);//setzt die "size" der Struktur
 		
 		this->generic_cb.userdata=this;
 		ssh_callbacks_init(&this->generic_cb);
@@ -353,7 +356,7 @@ namespace sshd{
 			if (status & (SSH_CLOSED | SSH_CLOSED_ERROR))
 			{
 				if(cc->cc_didshell){
-					this->sessionHandler->endSession(cc);
+					this->shellHandler->endShell(cc->shellId, cc);
 				}
 				if (cc->cc_channel)
 				{
@@ -410,11 +413,12 @@ namespace sshd{
 		myself->task();
 	}
 
-	SshDemon *SshDemon::InitAndRunSshD(const char *host_key, SessionHandler* handler)
+	SshDemon *SshDemon::InitAndRunSshD(const char *host_key, ShellHandler* handler, std::vector<User>* users)
 	{
 		SshDemon* demon = new SshDemon();
 		demon->host_key=host_key;
-		demon->sessionHandler=handler;
+		demon->shellHandler=handler;
+		demon->users=users;
 		xTaskCreate(SshDemon::static_task, "sshd", 4096*4, (void*)demon, 10, nullptr);
 		return demon;
 	}

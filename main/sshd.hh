@@ -6,52 +6,86 @@
 #include "freertos/task.h"
 #include <sys/queue.h>
 #include <array>
-#include "session_handler.hh"
+#include <vector>
+#include "shell_handler.hh"
 
-namespace sshd{	
-	class ConnectionCtx:public SessionCallback
+namespace sshd
+{
+	class ConnectionCtx : public ShellCallback
 	{
-		public:
+	public:
 		ssh_session cc_session{nullptr};
 		ssh_channel cc_channel{nullptr};
 		bool cc_didauth{false};
+		bool is_privileded{false};
 		bool cc_didpty{false};
 		bool cc_didshell{false};
+		ShellId shellId;
 		int cc_cols{0};
 		int cc_rows{0};
 		int cc_py{0};
 		int cc_px{0};
 		char cc_term[16];
-		ConnectionCtx(ssh_session session):cc_session(session)
+		ConnectionCtx(ssh_session session) : cc_session(session)
 		{
 		}
 
-		~ConnectionCtx(){
-
+		~ConnectionCtx()
+		{
 		}
 
-		void printChar(char c) override{
+		bool IsPrivilegedUser() override{
+			return is_privileded;
+		}
+
+		void printChar(char c) override
+		{
 			ssh_channel_write(cc_channel, &c, 1);
 			return;
 		}
-		size_t printf(const char *fmt, ...)override{
-			return 0;
+		size_t printf(const char *fmt, ...) override
+		{
+			char tmp[512];
+			int i;
+			va_list args;
+
+			va_start(args, fmt);
+			int size = vsnprintf(tmp, sizeof(tmp), fmt, args);
+			va_end(args);
+			ssh_channel_write(cc_channel, &tmp, size);
+			return (size_t)size;
 		}
+	};
+
+	class User{
+		public:
+		const char* Username;
+		const char* Password;
+		bool IsPrivileged;
+		User(const char* Username, const char* Password, bool IsPrivileged):Username(Username), Password(Password), IsPrivileged(IsPrivileged){}
 	};
 
 	class SshDemon
 	{
-		private:
+	private:
 		ssh_event sshevent;
 		ssh_bind sshbind;
-		struct ssh_server_callbacks_struct server_cb{};
-		struct ssh_callbacks_struct generic_cb{};
-		struct ssh_bind_callbacks_struct bind_cb{};
-		struct ssh_channel_callbacks_struct channel_cb{};
+		struct ssh_server_callbacks_struct server_cb
+		{
+		};
+		struct ssh_callbacks_struct generic_cb
+		{
+		};
+		struct ssh_bind_callbacks_struct bind_cb
+		{
+		};
+		struct ssh_channel_callbacks_struct channel_cb
+		{
+		};
 		int auth_methods;
 		const char *host_key;
-		SessionHandler* sessionHandler;
-		std::array<ConnectionCtx*, 3> connection_ctx_array{nullptr, nullptr, nullptr};
+		ShellHandler *shellHandler;
+		std::array<ConnectionCtx *, 3> connection_ctx_array{nullptr, nullptr, nullptr};
 
 		ConnectionCtx *lookup_connectioncontext(ssh_session session);
 		static int data_function(ssh_session session, ssh_channel channel, void *data, uint32_t len, int is_stderr, void *userdata);
@@ -62,15 +96,13 @@ namespace sshd{
 		static ssh_channel channel_open(ssh_session session, void *userdata);
 		static void incoming_connection(ssh_bind sshbind, void *userdata);
 		static int auth_password(ssh_session session, const char *user, const char *password, void *userdata);
-		int	create_new_server();
+		int create_new_server();
 		void dead_eater();
 		void task();
 		static void static_task(void *arg);
-		public:
-		
-		static SshDemon* InitAndRunSshD(const char *hardcoded_example_host_key, SessionHandler* handler);
+		std::vector<User>* users;
+	public:
+		static SshDemon *InitAndRunSshD(const char *hardcoded_example_host_key, ShellHandler *handler, std::vector<User>* users);
 	};
-
-	
 
 }

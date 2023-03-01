@@ -145,6 +145,10 @@ const char *hardcoded_example_host_key =
 	"l9rTiUsxla43sBAAAAHHRubkB0MzYxMC5yeW1kZmFydHN2ZXJrZXQuc2UBAgMEBQY=\n"
 	"-----END OPENSSH PRIVATE KEY-----\n";
 
+std::vector<sshd::User> USERS{
+	{"user", "user", false},
+	{"root", "root", true}
+};
 
 extern "C" void
 app_main(void)
@@ -153,7 +157,8 @@ app_main(void)
 	/* replace with SSID and passphrase */
 	//wifi_init_sta(CONFIG_NETWORK_WIFI_STA_SSID, CONFIG_NETWORK_WIFI_STA_PASSWORD);
     WIFI_ETH::initETH(false, SPI2_HOST, GPIO_NUM_13, GPIO_NUM_11, GPIO_NUM_12, SPI_MASTER_FREQ_20M, GPIO_NUM_21, GPIO_NUM_10, GPIO_NUM_14, 1);
-	MiniCli *cli = new MiniCli();
-	sshd::SshDemon::InitAndRunSshD(hardcoded_example_host_key, cli);
+	CLI::MiniCli *cli = new CLI::MiniCli();
+
+	sshd::SshDemon::InitAndRunSshD(hardcoded_example_host_key, cli, &USERS);
 }
 
