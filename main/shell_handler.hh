@@ -7,7 +7,7 @@ class ShellCallback{
 	virtual void printChar(char c)=0;
 	virtual size_t printf(const char *fmt, ...)=0;
 	virtual bool IsPrivilegedUser()=0;
-
+	virtual const char* GetUsername()=0;
 	ShellCallback(){}
 	virtual ~ShellCallback(){}
 };

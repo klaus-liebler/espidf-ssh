@@ -239,7 +239,7 @@ namespace sshd{
 		delete cc;
 	}
 
-	int SshDemon::auth_password(ssh_session session, const char *user, const char *password, void *userdata)
+	int SshDemon::auth_password(ssh_session session, const char *username, const char *password, void *userdata)
 	{
 		SshDemon *sshd = static_cast<SshDemon*>(userdata);
 		ConnectionCtx* cc = sshd->lookup_connectioncontext(session);
@@ -248,11 +248,14 @@ namespace sshd{
 		if (cc->cc_didauth)
 			return SSH_AUTH_DENIED;
 		for(auto user:*sshd->users){
-			if(strcmp("user", user.Username) == 0 && strcmp("password", user.Password) != 0){
+			if(strcmp(username, user.Username) == 0 && strcmp(password, user.Password) == 0){
 				cc->cc_didauth = true;
 				cc->is_privileded=user.IsPrivileged;
+				cc->username=user.Username;
 				ESP_LOGI(TAG, "SSH_AUTH_SUCCESS!");
 				return SSH_AUTH_SUCCESS;
+			}else{
+				ESP_LOGI(TAG, "%s/%s is not equal to %s/%s", username, password, user.Username, user.Password);
 			}
 		}
 		return SSH_AUTH_DENIED;

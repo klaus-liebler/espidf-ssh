@@ -26,6 +26,10 @@ namespace sshd
 		int cc_py{0};
 		int cc_px{0};
 		char cc_term[16];
+		const char* username;
+		const char* GetUsername() override{
+			return username;
+		}
 		ConnectionCtx(ssh_session session) : cc_session(session)
 		{
 		}
@@ -46,9 +50,7 @@ namespace sshd
 		size_t printf(const char *fmt, ...) override
 		{
 			char tmp[512];
-			int i;
 			va_list args;
-
 			va_start(args, fmt);
 			int size = vsnprintf(tmp, sizeof(tmp), fmt, args);
 			va_end(args);
