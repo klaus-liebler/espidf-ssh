@@ -7,7 +7,7 @@
     "idf.openOcdConfigs": [
         "board/esp32-wrover-kit-3.3v.cfg"
     ],
-    "idf.portWin": "COM11",
+    "idf.portWin": "COM3",
     "idf.pythonBinPathWin": "C:\\Users\\KlausLiebler\\.espressif\\python_env\\idf5.0_py3.8_env\\Scripts\\python.exe",
     "idf.toolsPathWin": "C:\\Users\\KlausLiebler\\.espressif",
     "idf.flashType": "UART",
@@ -92,6 +92,8 @@
         "streambuf": "cpp",
         "thread": "cpp",
         "cinttypes": "cpp",
-        "typeinfo": "cpp"
+        "typeinfo": "cpp",
+        "complex": "cpp",
+        "netfwd": "cpp"
     }
 }
