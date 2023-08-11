@@ -68,16 +68,23 @@ yNPw+hYXOKE4k5bgOh/XthrhEimtldiwDFDzU6PUiAh97KVTph/eQsrhomNF1w8fREVsua
 BAUGBw==
 -----END OPENSSH PRIVATE KEY-----)foo";
 
+
+
 std::vector<sshd::User> USERS{
 	{"klaus", "klaus", false},
 	{"root", "root", true}};
 
-
-
 #define TAG "MAIN"
+
+void FreeMemoryForOTA(){
+    ESP_LOGI(TAG, "Requesting all Tasks to finish, Free Heap=%lu", esp_get_free_heap_size());
+	//do whatever you need!
+    vTaskDelay(pdMS_TO_TICKS(500));
+    ESP_LOGI(TAG, "Free heap after deleting all objects %lu", esp_get_free_heap_size());
+}
 class GpioCommand : public CLI::AbstractCommand
 {
-	int Execute(ShellCallback *cb, int argc, char *argv[]) override
+	int Execute(IShellCallback *cb, int argc, char *argv[]) override
 	{
 		arg_lit *help = arg_litn(NULL, "help", 0, 1, "display this help and exit");
 		arg_int *input = arg_intn("i", "input", "<n>", 0, 1, "read from input");
@@ -148,7 +155,7 @@ extern "C" void
 app_main(void)
 {
 	ESP_ERROR_CHECK(nvs_flash_init());
-	ESP_ERROR_CHECK(WIFISTA::InitAndRun("smopla", "myosotis2020"));
+	ESP_ERROR_CHECK(WIFISTA::InitAndRun("smopla", "12345678"));
 
 	std::vector<CLI::AbstractCommand *> custom_commands = {new GpioCommand(), new OTACommand()};
 	CLI::MegaCli *cli = new CLI::MegaCli(true, custom_commands);
